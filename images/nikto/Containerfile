@@ -1,0 +1,60 @@
+FROM alpine:latest
+
+RUN mkdir -p /usr/src/perl
+WORKDIR /usr/src/perl
+
+RUN apk update && apk upgrade && apk add --no-cache \
+        build-base \
+        curl \
+        gcc \
+        gnupg \
+        make \
+        openssl \
+        openssl-dev \
+        tar \
+        zlib \
+        zlib-dev \
+    && rm -rf /var/cache/apk/* \
+    && curl -SLO https://www.cpan.org/src/5.0/perl-5.36.0.tar.gz \
+    && echo 'e26085af8ac396f62add8a533c3a0ea8c8497d836f0689347ac5abd7b7a4e00a *perl-5.36.0.tar.gz' | sha256sum -c - \
+    && tar --strip-components=1 -xzf perl-5.36.0.tar.gz -C /usr/src/perl \
+    && rm perl-5.36.0.tar.gz \
+    && ./Configure -des \
+        -Duse64bitall \
+        -Dcccdlflags='-fPIC' \
+        -Dccdlflags='-rdynamic' \
+        -Dlocincpth=' ' \
+        -Duselargefiles \
+        -Duseshrplib \
+        -Dd_semctl_semun \
+        -Dusenm \
+        -Dprefix='/opt/perl' \
+    && make libperl.so \
+    && make -j$(nproc) \
+    && make install \
+    && rm -rf /usr/src/perl
+
+WORKDIR /opt/perl
+ENV PATH="/opt/perl/bin:${PATH}"
+
+RUN curl -o /tmp/cpm -sL --compressed https://raw.githubusercontent.com/skaji/cpm/main/cpm \
+    && chmod 755 /tmp/cpm \
+    && /tmp/cpm install --show-build-log-on-failure -g App::cpm App::cpanminus IO::Socket::SSL \
+    && rm -rf /root/.perl-cpm /tmp/cpm
+
+RUN apk del \
+        openssl-dev \
+        zlib-dev
+
+WORKDIR /tool/nikto
+
+RUN apk update && \
+    apk add git && \
+    apk add patch perl perl-dev curl && \
+    #apk add perl libnet-ssleay-perl openssl libauthen-pam-perl libio-pty-perl && \
+    git clone https://github.com/sullo/nikto && \
+    cd nikto/program
+
+WORKDIR /tool/nikto/nikto/program
+
+CMD ["./nikto.pl", "-h"]

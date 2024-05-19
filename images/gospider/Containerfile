@@ -1,0 +1,17 @@
+FROM golang:alpine
+
+WORKDIR /tool/gospider
+
+RUN go install github.com/jaeles-project/gospider@latest
+
+RUN mv $GOPATH/bin/gospider .
+
+FROM alpine:latest
+
+ENV PATH="$PATH:/tool"
+
+WORKDIR ${PATH}
+
+COPY --from=0 /tool/gospider/gospider /tool/gospider
+
+CMD ["gospider"]

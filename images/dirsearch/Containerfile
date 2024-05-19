@@ -1,0 +1,9 @@
+FROM python:alpine
+
+ENV PATH="$PATH:/tool"
+
+WORKDIR ${PATH}
+
+RUN pip3 install dirsearch
+
+CMD ["dirsearch"]

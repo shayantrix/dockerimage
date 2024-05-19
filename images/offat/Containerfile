@@ -1,0 +1,9 @@
+FROM python:alpine
+
+ENV PATH="$PATH:/tool"
+
+WORKDIR ${PATH}
+
+RUN python -m pip install offat
+
+CMD ["offat"]

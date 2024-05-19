@@ -1,0 +1,19 @@
+FROM golang:alpine
+
+RUN apk add build-base
+
+WORKDIR /tool/katana
+
+RUN go install github.com/projectdiscovery/katana/cmd/katana@latest
+
+RUN mv $GOPATH/bin/katana .
+
+FROM alpine:latest
+
+ENV PATH="$PATH:/tool"
+
+WORKDIR ${PATH}
+
+COPY --from=0 /tool/katana/katana /tool/katana
+
+CMD ["katana"]
